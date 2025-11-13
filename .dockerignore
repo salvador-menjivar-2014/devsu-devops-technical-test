@@ -14,3 +14,5 @@ __pycache__/
 
 .vscode/
 .idea/
+
+k8s/secrets.yml

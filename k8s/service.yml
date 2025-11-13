@@ -1,0 +1,13 @@
+# k8s/service.yml
+apiVersion: v1
+kind: Service
+metadata:
+  name: devsu-api-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: devsu-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
