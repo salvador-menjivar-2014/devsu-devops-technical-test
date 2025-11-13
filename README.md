@@ -2,6 +2,8 @@
 
 Este repositorio contiene la solución completa para la prueba técnica de DevOps. La solución incluye la aplicación Django, su contenedorización con Docker, un pipeline de CI/CD seguro con GitHub Actions y manifiestos para su despliegue en un entorno de Kubernetes.
 
+Link de GitHub: [https://github.com/salvador-menjivar-2014/devsu-devops-technical-test]
+
 ## Arquitectura de la Solución
 
 El siguiente diagrama ilustra el flujo de trabajo de DevSecOps implementado, desde el desarrollo hasta el despliegue.
