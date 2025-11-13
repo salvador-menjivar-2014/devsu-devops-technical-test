@@ -18,8 +18,8 @@ El siguiente diagrama ilustra el flujo de trabajo de DevSecOps implementado, des
     3.  **Escaneo de Vulnerabilidades:** Análisis con **Trivy** para detectar vulnerabilidades `HIGH` o `CRITICAL` y detener el pipeline si se encuentran.
 -   **Despliegue Robusto en Kubernetes:**
     -   **Alta Disponibilidad:** El `Deployment` de la aplicación está configurado con **2 réplicas**.
-    -   **Gestión de Configuración Segura:** Uso de `Secrets` de Kubernetes para gestionar credenciales y claves sensibles, manteniéndolas fuera del control de versiones.
-    -   **Exposición de Servicio:** Un `Service` de tipo `LoadBalancer` expone la aplicación para el acceso local a través de un túnel de Minikube.
+    -   **Gestión de Configuración Segura:** Uso de `Secrets` para credenciales y `ConfigMaps` para configuraciones no sensibles como `ALLOWED_HOSTS`.
+    -   **Enrutamiento Avanzado:** Un `Ingress` gestiona el acceso externo a la aplicación, permitiendo un enrutamiento basado en host, que es la práctica estándar en producción.
 
 ## Cómo Ejecutar Localmente con Minikube
 
