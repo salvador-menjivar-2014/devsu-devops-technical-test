@@ -1,139 +1,104 @@
-# Demo Devops Python
+# Prueba Técnica DevOps - Demo API por Salvador Menjivar
 
-This is a simple application to be used in the technical test of DevOps.
+Este repositorio contiene la solución completa para la prueba técnica de DevOps. La solución incluye la aplicación Django, su contenedorización con Docker, un pipeline de CI/CD seguro con GitHub Actions y manifiestos para su despliegue en un entorno de Kubernetes.
 
-## Getting Started
+## Arquitectura de la Solución
 
-### Prerequisites
+El siguiente diagrama ilustra el flujo de trabajo de DevSecOps implementado, desde el desarrollo hasta el despliegue.
 
-- Python 3.11.3
+```mermaid
+graph TD
+    A[👨‍💻 Desarrollador] -- git push --> B[🐱 GitHub];
+    B --> C{🤖 GitHub Actions};
+    C -- Dispara Workflow --> D[🧪 Job: Test];
+    D -- Pasa --> E[🏗️ Job: Build & Push];
+    E -- Imagen OK --> F[🛡️ Job: Scan];
+    E -- Publica Imagen --> G[🐳 Docker Hub];
+    F -- Pasa --> H{✅ Pipeline Exitoso};
 
-### Installation
+    subgraph Kubernetes Cluster (Minikube)
+        I[🌐 Ingress] --> J[🚦 Service];
+        J --> K[<font size=5>📱</font> Pod 1];
+        J --> L[<font size=5>📱</font> Pod 2];
+        K -- Conecta a --> M[<font size=5>🗄️</font> Pod BD];
+        L -- Conecta a --> M;
+    end
 
-Clone this repo.
+    G -- k8s pull image --> K;
+    G -- k8s pull image --> L;```
 
-```bash
-git clone https://bitbucket.org/devsu/demo-devops-python.git
-```
+## Características Clave Implementadas
 
-Install dependencies.
+-   **Contenedorización Profesional:** Uso de un `Dockerfile` multi-etapa para crear una imagen de producción ligera y segura, ejecutando la aplicación con un usuario no-root para minimizar la superficie de ataque.
+-   **Pipeline CI/CD Completo:** Flujo de trabajo automatizado en GitHub Actions que garantiza la calidad y seguridad del código:
+    1.  **Pruebas Unitarias:** Ejecución de la suite de tests de Django contra una base de datos PostgreSQL temporal y aislada.
+    2.  **Construcción y Publicación:** Creación de la imagen de Docker y subida a un registro público en Docker Hub.
+    3.  **Escaneo de Vulnerabilidades (DevSecOps):** Análisis de la imagen con **Trivy** para detectar vulnerabilidades en el SO y las librerías. El pipeline se detiene si se encuentran vulnerabilidades de severidad `HIGH` o `CRITICAL`.
+-   **Despliegue Robusto en Kubernetes:**
+    -   **Alta Disponibilidad:** El `Deployment` de la aplicación está configurado con **2 réplicas** para asegurar la disponibilidad.
+    -   **Gestión de Configuración Segura:**
+        -   **Secrets:** Las credenciales de la base de datos y la Django Secret Key se gestionan a través de `Secrets` de Kubernetes, manteniéndolas fuera del control de versiones.
+        -   **ConfigMaps:** La configuración no sensible, como `ALLOWED_HOSTS`, se gestiona a través de un `ConfigMap`.
+    -   **Enrutamiento Avanzado:** Un `Ingress` gestiona el acceso externo a la aplicación, permitiendo un enrutamiento basado en host, que es la práctica estándar en producción.
 
-```bash
-pip install -r requirements.txt
-```
+## Cómo Ejecutar Localmente con Minikube
 
-Migrate database
+**Prerrequisitos:**
+-   Docker
+-   Minikube
+-   kubectl
 
-```bash
-py manage.py makemigrations
-py manage.py migrate
-```
+1.  **Iniciar Minikube:**
+    ```bash
+    minikube start
+    ```
 
-### Database
+2.  **Habilitar el Ingress Controller:**
+    ```bash
+    minikube addons enable ingress
+    ```
 
-The database is generated as a file in the main path when the project is first run, and its name is `db.sqlite3`.
+3.  **Construir la Imagen Localmente:** Debido a las diferencias de arquitectura (local ARM vs. CI AMD64), la imagen debe ser construida en el entorno de Minikube.
+    ```bash
+    eval $(minikube docker-env)
+    docker build -t salvadormenjivar/devsu-app:latest .
+    eval $(minikube docker-env -u)
+    ```
 
-Consider giving access permissions to the file for proper functioning.
+4.  **Obtener la IP de Minikube y Configurar Host:**
+    ```bash
+    minikube ip
+    ```
+    Añade la siguiente línea a tu archivo `/etc/hosts` (necesitarás `sudo`), reemplazando `<MINIKUBE_IP>` con la IP del paso anterior:
+    ```
+    <MINIKUBE_IP> devsu-api.local
+    ```
 
-## Usage
+5.  **Aplicar los Manifiestos de Kubernetes:**
+    *Recuerda crear tus propios `k8s/secrets.yml` y `k8s/postgres-secret.yml` si los valores por defecto no son adecuados.*
+    ```bash
+    kubectl apply -f k8s/
+    ```
 
-To run tests you can use this command.
+6.  **Ejecutar las Migraciones de la Base de Datos:**
+    ```bash
+    # Espera a que los pods de la aplicación estén en estado 'Running'
+    POD_NAME=$(kubectl get pods -l app=devsu-api -o jsonpath='{.items.metadata.name}')
+    kubectl exec -it $POD_NAME -- python manage.py migrate
+    ```
 
-```bash
-py manage.py test
-```
+7.  **Acceder a la Aplicación:**
+    Abre tu navegador y ve a la URL: **http://devsu-api.local/api/users/**.
 
-To run locally the project you can use this command.
+## Resultados del Pipeline y Despliegue
 
-```bash
-py manage.py runserver
-```
+A continuación se presentan las capturas de pantalla que validan la ejecución exitosa del proyecto.
 
-Open http://localhost:8000/api/ with your browser to see the result.
+**1. Pipeline de CI/CD Exitoso en GitHub Actions:**
+*(Aquí debes pegar tu captura de pantalla de la ejecución del pipeline con los 3 jobs en verde)*
 
-### Features
+**2. Verificación de Pods en Kubernetes:**
+*(Aquí debes pegar tu captura de pantalla de la terminal con el resultado de `kubectl get pods` mostrando los 3 pods en estado `Running`)*
 
-These services can perform,
-
-#### Create User
-
-To create a user, the endpoint **/api/users/** must be consumed with the following parameters:
-
-```bash
-  Method: POST
-```
-
-```json
-{
-    "dni": "dni",
-    "name": "name"
-}
-```
-
-If the response is successful, the service will return an HTTP Status 200 and a message with the following structure:
-
-```json
-{
-    "id": 1,
-    "dni": "dni",
-    "name": "name"
-}
-```
-
-If the response is unsuccessful, we will receive status 400 and the following message:
-
-```json
-{
-    "detail": "error"
-}
-```
-
-#### Get Users
-
-To get all users, the endpoint **/api/users** must be consumed with the following parameters:
-
-```bash
-  Method: GET
-```
-
-If the response is successful, the service will return an HTTP Status 200 and a message with the following structure:
-
-```json
-[
-    {
-        "id": 1,
-        "dni": "dni",
-        "name": "name"
-    }
-]
-```
-
-#### Get User
-
-To get an user, the endpoint **/api/users/<id>** must be consumed with the following parameters:
-
-```bash
-  Method: GET
-```
-
-If the response is successful, the service will return an HTTP Status 200 and a message with the following structure:
-
-```json
-{
-    "id": 1,
-    "dni": "dni",
-    "name": "name"
-}
-```
-
-If the user id does not exist, we will receive status 404 and the following message:
-
-```json
-{
-    "detail": "Not found."
-}
-```
-
-## License
-
-Copyright © 2023 Devsu. All rights reserved.
+**3. Aplicación Funcionando:**
+*(Aquí debes pegar tu captura de pantalla del navegador mostrando la API de Django REST Framework en `http://devsu-api.local/api/users/`)*

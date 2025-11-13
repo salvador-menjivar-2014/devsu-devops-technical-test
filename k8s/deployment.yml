@@ -14,18 +14,24 @@ spec:
         app: devsu-api
     spec:
       containers:
-      - name: devsu-api-container
-        image: salvadormenjivar/devsu-app:latest
-        ports:
-        - containerPort: 8000
-        env:
-        - name: DJANGO_SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-              name: api-secrets
-              key: django_secret_key
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: api-secrets
-              key: database_url
+        - name: devsu-api-container
+          image: salvadormenjivar/devsu-app:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DJANGO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: api-secrets
+                  key: django_secret_key
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: api-secrets
+                  key: database_url
+            - name: ALLOWED_HOSTS
+              valueFrom:
+                configMapKeyRef:
+                  name: api-configmap
+                  key: ALLOWED_HOSTS
